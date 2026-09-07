@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { clerkMiddleware } from "@clerk/express";
 import authRoutes from "./routes/authRoutes.js";
+import documentRoutes from "./routes/documentRoutes.js";
 
 
 dotenv.config();
@@ -29,6 +30,7 @@ app.get("/api/health", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/documents", documentRoutes);
 
 
 export default app;
