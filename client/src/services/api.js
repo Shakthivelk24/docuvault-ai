@@ -174,8 +174,27 @@ export const api = {
         if (onProgress && e.total) onProgress(Math.round((e.loaded / e.total) * 100))
       },
     })
-    const { data } = await client.post('/documents', { documentId: presigned.documentId })
-    return data
+
+    // The current server persists the upload in S3 through the signed URL.
+    // Return the local document shape until document persistence endpoints exist.
+    const uploadedAt = nowIso()
+    const ext = file.name.split('.').pop().toLowerCase()
+    return {
+      id: presigned.documentId,
+      name: file.name,
+      type: ext === 'jpeg' ? 'jpg' : ext,
+      size: file.size,
+      uploadedAt,
+      modifiedAt: uploadedAt,
+      owner: 'You',
+      status: 'processing',
+      favorite: false,
+      pages: null,
+      summary: null,
+      keywords: [],
+      classification: null,
+      activity: [{ type: 'upload', label: 'Document uploaded', at: uploadedAt }],
+    }
   },
 
   /** Delete a document. */
