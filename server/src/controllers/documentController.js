@@ -1,6 +1,32 @@
 import { getAuth } from "@clerk/express";
-import { generateUploadUrl } from "../services/s3Service.js";
+import {
+  generateUploadUrl,
+  listUserDocuments,
+} from "../services/s3Service.js";
 import crypto from "crypto";
+
+export const getDocuments = async (req, res) => {
+  try {
+    const { userId } = getAuth(req);
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    const documents = await listUserDocuments(userId);
+    return res.status(200).json(documents);
+  } catch (error) {
+    console.error("List documents error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to list documents",
+    });
+  }
+};
 
 export const createUploadUrl = async (req, res) => {
   try {
