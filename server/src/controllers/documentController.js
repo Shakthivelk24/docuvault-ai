@@ -1,6 +1,7 @@
 import { getAuth } from "@clerk/express";
 import {
   generateUploadUrl,
+  generatePreviewUrl,
   listUserDocuments,
 } from "../services/s3Service.js";
 import crypto from "crypto";
@@ -72,5 +73,49 @@ export const createUploadUrl = async (req, res) => {
       success: false,
       message: "Failed to generate upload URL",
     });
+  }
+};
+
+export const getPreviewUrl = async (req, res) => {
+  try {
+    const { userId } = getAuth(req);
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const previewUrl = await generatePreviewUrl({
+      userId,
+      documentId: req.params.id,
+    });
+
+    if (!previewUrl) {
+      return res.status(404).json({ success: false, message: "Document file not found" });
+    }
+
+    return res.status(200).json({ previewUrl });
+  } catch (error) {
+    console.error("Preview URL error:", error);
+    return res.status(500).json({ success: false, message: "Failed to create preview URL" });
+  }
+};
+
+export const getDocument = async (req, res) => {
+  try {
+    const { userId } = getAuth(req);
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const document = (await listUserDocuments(userId)).find(
+      (item) => item.id === req.params.id
+    );
+    if (!document) {
+      return res.status(404).json({ success: false, message: "Document not found" });
+    }
+
+    return res.status(200).json(document);
+  } catch (error) {
+    console.error("Get document error:", error);
+    return res.status(500).json({ success: false, message: "Failed to get document" });
   }
 };
