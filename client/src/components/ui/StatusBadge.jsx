@@ -2,6 +2,18 @@ import { CheckCircle2, Loader2, XCircle, Circle } from 'lucide-react'
 
 // Processing status pill (Completed / Processing / Failed).
 const STATUS = {
+  READY: {
+    Icon: CheckCircle2,
+    label: 'READY',
+    className: 'bg-emerald-500/10 text-emerald-500',
+    spin: false,
+  },
+  UPLOADING: {
+    Icon: Loader2,
+    label: 'UPLOADING',
+    className: 'bg-amber-500/10 text-amber-500',
+    spin: true,
+  },
   completed: {
     Icon: CheckCircle2,
     label: 'Completed',
