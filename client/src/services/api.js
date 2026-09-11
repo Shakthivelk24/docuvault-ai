@@ -112,6 +112,18 @@ export const api = {
     return data
   },
 
+  /** Get a short-lived URL for viewing the original file. */
+  async getPreviewUrl(id) {
+    if (USE_MOCK) {
+      await delay(250)
+      const doc = store.find((d) => d.id === id)
+      if (!doc) throw new Error('Document not found.')
+      return { previewUrl: doc.previewUrl || null }
+    }
+    const { data } = await client.get(`/documents/${id}/preview`)
+    return data
+  },
+
   /**
    * Upload a document.
    *
