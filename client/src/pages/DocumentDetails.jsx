@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -13,6 +13,8 @@ import {
   Calendar,
   User,
   Layers,
+  Eye,
+  ExternalLink,
 } from 'lucide-react'
 import { useDocument } from '@/hooks/useDocuments'
 import api from '@/services/api'
@@ -56,6 +58,43 @@ export default function DocumentDetails() {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const [analyzing, setAnalyzing] = useState(false)
+  const [previewUrl, setPreviewUrl] = useState(null)
+  const [previewText, setPreviewText] = useState('')
+  const [previewLoading, setPreviewLoading] = useState(true)
+  const [previewError, setPreviewError] = useState(null)
+
+  useEffect(() => {
+    if (!doc) return undefined
+
+    let active = true
+    setPreviewLoading(true)
+    setPreviewError(null)
+    setPreviewUrl(null)
+    setPreviewText('')
+
+    api.getPreviewUrl(doc.id)
+      .then(async ({ previewUrl: url }) => {
+        if (!active) return
+        setPreviewUrl(url)
+        if (doc.type === 'txt' && url) {
+          const response = await fetch(url)
+          if (!response.ok) throw new Error('Unable to load the text preview.')
+          setPreviewText(await response.text())
+        } else if (doc.type === 'txt') {
+          setPreviewText(doc.summary || 'No text preview is available for this document.')
+        }
+      })
+      .catch((err) => {
+        if (active) setPreviewError(err.message)
+      })
+      .finally(() => {
+        if (active) setPreviewLoading(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [doc])
 
   if (loading) return <PageLoader />
 
@@ -86,9 +125,18 @@ export default function DocumentDetails() {
   const { Icon, tint, bg, label } = getFileMeta(doc.type)
 
   async function handleDownload() {
-    toast.info(`Preparing “${doc.name}” for download…`)
-    // Real flow: request a short-lived pre-signed GET URL from the backend, then
-    // trigger the browser download. No S3 credentials ever touch the frontend.
+    try {
+      const url = previewUrl || (await api.getPreviewUrl(doc.id)).previewUrl
+      if (!url) throw new Error('The original file is not available yet.')
+      const link = document.createElement('a')
+      link.href = url
+      link.download = doc.name
+      link.target = '_blank'
+      link.rel = 'noopener noreferrer'
+      link.click()
+    } catch (err) {
+      toast.error(err.message)
+    }
   }
 
   async function handleRename(name) {
@@ -213,6 +261,49 @@ export default function DocumentDetails() {
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Main */}
         <div className="space-y-6 lg:col-span-2">
+          <section className="card overflow-hidden">
+            <div className="flex items-center justify-between border-b px-5 py-4">
+              <div className="flex items-center gap-2">
+                <Eye className="h-4 w-4 text-brand-500" />
+                <h2 className="text-base font-semibold">File preview</h2>
+              </div>
+              {previewUrl && (
+                <a
+                  href={previewUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn-ghost px-2 text-sm"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Open original
+                </a>
+              )}
+            </div>
+            <div className="min-h-90 bg-[rgb(var(--surface-2))] p-3 sm:p-5">
+              {previewLoading ? (
+                <div className="flex min-h-80 items-center justify-center text-sm text-muted">
+                  Loading preview...
+                </div>
+              ) : previewError ? (
+                <div className="flex min-h-80 items-center justify-center text-sm text-muted">
+                  {previewError}
+                </div>
+              ) : doc.type === 'pdf' && previewUrl ? (
+                <iframe src={previewUrl} title={`Preview of ${doc.name}`} className="h-140 w-full rounded-lg bg-white" />
+              ) : ['png', 'jpg', 'jpeg'].includes(doc.type) && previewUrl ? (
+                <img src={previewUrl} alt={doc.name} className="mx-auto max-h-140 max-w-full rounded-lg object-contain" />
+              ) : doc.type === 'txt' ? (
+                <pre className="min-h-80 whitespace-pre-wrap rounded-lg bg-white p-5 text-sm leading-6 text-slate-700 dark:bg-ink-900 dark:text-slate-200">
+                  {previewText}
+                </pre>
+              ) : (
+                <div className="flex min-h-80 flex-col items-center justify-center gap-2 text-center text-sm text-muted">
+                  <FileText className="h-8 w-8" />
+                  <p>Preview this file in a new tab or download it to open locally.</p>
+                </div>
+              )}
+            </div>
+          </section>
           <AISummary
             summary={doc.summary}
             keywords={doc.keywords}
