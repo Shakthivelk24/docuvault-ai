@@ -1,6 +1,7 @@
 import {
   ListObjectsV2Command,
   PutObjectCommand,
+  GetObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import s3Client from "../config/aws.js";
@@ -72,4 +73,23 @@ export const generateUploadUrl = async ({
   });
 
   return uploadUrl;
+};
+
+export const generatePreviewUrl = async ({ userId, documentId }) => {
+  const response = await s3Client.send(
+    new ListObjectsV2Command({
+      Bucket: BUCKET_NAME,
+      Prefix: `users/${userId}/${documentId}/`,
+      MaxKeys: 1,
+    })
+  );
+
+  const key = response.Contents?.find((object) => object.Key && !object.Key.endsWith("/"))?.Key;
+  if (!key) return null;
+
+  return getSignedUrl(
+    s3Client,
+    new GetObjectCommand({ Bucket: BUCKET_NAME, Key: key }),
+    { expiresIn: 300 }
+  );
 };
