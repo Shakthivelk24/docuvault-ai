@@ -2,9 +2,26 @@ import { getAuth } from "@clerk/express";
 import {
   generateUploadUrl,
   generatePreviewUrl,
-  listUserDocuments,
 } from "../services/s3Service.js";
+import {
+  createDocument,
+  getDocument as findDocument,
+  getUserDocuments,
+  updateDocumentStatus,
+} from "../services/dynamoService.js";
 import crypto from "crypto";
+
+function toClientDocument(document) {
+  return {
+    ...document,
+    id: document.documentId || document.id,
+    name: document.fileName || document.name,
+    type: document.contentType?.split("/").pop() || document.type || "file",
+    size: document.fileSize ?? document.size ?? 0,
+    uploadedAt: document.uploadedAt || null,
+  };
+}
+
 
 export const getDocuments = async (req, res) => {
   try {
@@ -17,7 +34,7 @@ export const getDocuments = async (req, res) => {
       });
     }
 
-    const documents = await listUserDocuments(userId);
+    const documents = (await getUserDocuments(userId)).map(toClientDocument);
     return res.status(200).json(documents);
   } catch (error) {
     console.error("List documents error:", error);
@@ -40,16 +57,17 @@ export const createUploadUrl = async (req, res) => {
       });
     }
 
-    const { fileName, contentType } = req.body;
+    const { fileName, contentType, fileSize } = req.body;
 
-    if (!fileName || !contentType) {
+    if (!fileName || !contentType || fileSize == null) {
       return res.status(400).json({
         success: false,
-        message: "fileName and contentType are required",
+        message: "fileName, contentType, and fileSize are required",
       });
     }
 
     const documentId = crypto.randomUUID();
+    
 
     const safeFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
 
@@ -60,7 +78,19 @@ export const createUploadUrl = async (req, res) => {
       contentType,
     });
 
-    res.status(200).json({
+    await createDocument({
+      userId,
+      documentId,
+      fileName,
+      contentType,
+      fileSize,
+      s3Key: key,
+      status: "UPLOADING",
+      aiStatus: "PENDING",
+      uploadedAt: new Date().toISOString(),
+    });
+
+    return res.status(200).json({
       success: true,
       documentId,
       key,
@@ -99,6 +129,29 @@ export const getPreviewUrl = async (req, res) => {
   }
 };
 
+export const completeUpload = async (req, res) => {
+  try {
+    const { userId } = getAuth(req);
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const { id: documentId } = req.params;
+    console.log("Completing upload:", { userId, documentId });
+
+    const document = await findDocument(userId, documentId);
+    if (!document) {
+      return res.status(404).json({ success: false, message: "Document not found" });
+    }
+
+    const updatedDocument = await updateDocumentStatus(userId, documentId, "READY");
+    return res.status(200).json(toClientDocument(updatedDocument));
+  } catch (error) {
+    console.error("Complete upload error:", error);
+    return res.status(500).json({ success: false, message: "Failed to complete upload" });
+  }
+};
+
 export const getDocument = async (req, res) => {
   try {
     const { userId } = getAuth(req);
@@ -106,14 +159,12 @@ export const getDocument = async (req, res) => {
       return res.status(401).json({ success: false, message: "Unauthorized" });
     }
 
-    const document = (await listUserDocuments(userId)).find(
-      (item) => item.id === req.params.id
-    );
+    const document = await findDocument(userId, req.params.id);
     if (!document) {
       return res.status(404).json({ success: false, message: "Document not found" });
     }
 
-    return res.status(200).json(document);
+    return res.status(200).json(toClientDocument(document));
   } catch (error) {
     console.error("Get document error:", error);
     return res.status(500).json({ success: false, message: "Failed to get document" });
