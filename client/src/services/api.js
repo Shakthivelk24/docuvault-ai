@@ -124,6 +124,30 @@ export const api = {
     return data
   },
 
+  async getUploadUrl(file) {
+    const { data } = await client.post('/documents/upload-url', {
+      fileName: file.name,
+      contentType: file.type,
+      fileSize: file.size,
+    })
+    return data
+  },
+
+  async uploadFileToS3(file, uploadUrl, { onProgress, signal } = {}) {
+    await axios.put(uploadUrl, file, {
+      headers: { 'Content-Type': file.type },
+      signal,
+      onUploadProgress: (e) => {
+        if (onProgress && e.total) onProgress(Math.round((e.loaded / e.total) * 100))
+      },
+    })
+  },
+
+  async completeUpload(documentId) {
+    const { data } = await client.post(`/documents/${documentId}/upload-complete`)
+    return data
+  },
+
   /**
    * Upload a document.
    *
@@ -174,39 +198,11 @@ export const api = {
     }
 
     // --- Real backend ---
-    const { data: presigned } = await client.post('/documents/upload-url', {
-      fileName: file.name,
-      contentType: file.type,
-      size: file.size,
-    })
-    await axios.put(presigned.uploadUrl, file, {
-      headers: { 'Content-Type': file.type },
-      signal,
-      onUploadProgress: (e) => {
-        if (onProgress && e.total) onProgress(Math.round((e.loaded / e.total) * 100))
-      },
-    })
-
-    // The current server persists the upload in S3 through the signed URL.
-    // Return the local document shape until document persistence endpoints exist.
-    const uploadedAt = nowIso()
-    const ext = file.name.split('.').pop().toLowerCase()
-    return {
-      id: presigned.documentId,
-      name: file.name,
-      type: ext === 'jpeg' ? 'jpg' : ext,
-      size: file.size,
-      uploadedAt,
-      modifiedAt: uploadedAt,
-      owner: 'You',
-      status: 'processing',
-      favorite: false,
-      pages: null,
-      summary: null,
-      keywords: [],
-      classification: null,
-      activity: [{ type: 'upload', label: 'Document uploaded', at: uploadedAt }],
-    }
+    const presigned = await this.getUploadUrl(file)
+    console.log('Upload file size:', file.size)
+    await this.uploadFileToS3(file, presigned.uploadUrl, { onProgress, signal })
+    console.log('Upload complete document:', presigned.documentId)
+    return this.completeUpload(presigned.documentId)
   },
 
   /** Delete a document. */
