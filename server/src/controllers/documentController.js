@@ -92,6 +92,7 @@ export const createUploadUrl = async (req, res) => {
       s3Key: key,
       status: "UPLOADING",
       aiStatus: "PENDING",
+      favorite: false,
       uploadedAt: new Date().toISOString(),
     });
 
