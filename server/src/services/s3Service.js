@@ -2,6 +2,7 @@ import {
   ListObjectsV2Command,
   PutObjectCommand,
   GetObjectCommand,
+  DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import s3Client from "../config/aws.js";
@@ -91,5 +92,14 @@ export const generatePreviewUrl = async ({ userId, documentId }) => {
     s3Client,
     new GetObjectCommand({ Bucket: BUCKET_NAME, Key: key }),
     { expiresIn: 300 }
+  );
+};
+
+export const deleteObject = async (key) => {
+  await s3Client.send(
+    new DeleteObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: key,
+    })
   );
 };
