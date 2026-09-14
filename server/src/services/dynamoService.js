@@ -75,3 +75,52 @@ export const updateDocumentStatus = async (userId, documentId, status) => {
   const result = await dynamoClient.send(command);
   return result.Attributes;
 };
+
+export const updateDocumentFavorite = async (userId, documentId, favorite) => {
+  const command = new UpdateCommand({
+    TableName: TABLE_NAME,
+    Key: { userId, documentId },
+    UpdateExpression: "SET favorite = :favorite",
+    ExpressionAttributeValues: { ":favorite": favorite },
+    ConditionExpression: "attribute_exists(userId) AND attribute_exists(documentId)",
+    ReturnValues: "ALL_NEW",
+  });
+
+  const result = await dynamoClient.send(command);
+  return result.Attributes;
+};
+
+export const updateDocument = async (userId, documentId, updates) => {
+  const updateExpressions = [];
+  const expressionAttributeValues = {};
+  const expressionAttributeNames = {};
+
+  Object.entries(updates).forEach(([key, value]) => {
+    const safeKey = key === "status" ? "#status" : key === "name" ? "#name" : key;
+    updateExpressions.push(`${safeKey} = :${key}`);
+    expressionAttributeValues[`:${key}`] = value;
+    
+    if (safeKey !== key) {
+      expressionAttributeNames[safeKey] = key;
+    }
+  });
+
+  if (updateExpressions.length === 0) {
+    throw new Error("No updates provided");
+  }
+
+  const command = new UpdateCommand({
+    TableName: TABLE_NAME,
+    Key: { userId, documentId },
+    UpdateExpression: `SET ${updateExpressions.join(", ")}`,
+    ExpressionAttributeValues: expressionAttributeValues,
+    ...(Object.keys(expressionAttributeNames).length > 0 && {
+      ExpressionAttributeNames: expressionAttributeNames,
+    }),
+    ConditionExpression: "attribute_exists(userId) AND attribute_exists(documentId)",
+    ReturnValues: "ALL_NEW",
+  });
+
+  const result = await dynamoClient.send(command);
+  return result.Attributes;
+};
