@@ -103,3 +103,24 @@ export const deleteObject = async (key) => {
     })
   );
 };
+
+export const downloadObject = async (key) => {
+  const response = await s3Client.send(
+    new GetObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: key,
+    })
+  );
+
+  if (!response.Body) {
+    throw new Error("S3 object has no body.");
+  }
+
+  const chunks = [];
+
+  for await (const chunk of response.Body) {
+    chunks.push(chunk);
+  }
+
+  return Buffer.concat(chunks);
+};
