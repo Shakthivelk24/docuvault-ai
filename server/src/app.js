@@ -5,6 +5,7 @@ import { clerkMiddleware } from "@clerk/express";
 import authRoutes from "./routes/authRoutes.js";
 import documentRoutes from "./routes/documentRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
+import notificationRoutes from './routes/notificationRoutes.js'
 
 
 dotenv.config();
@@ -33,6 +34,9 @@ app.get("/api/health", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/ai", aiRoutes);
-
+app.use(
+  '/api/notifications',
+  notificationRoutes
+)
 
 export default app;
