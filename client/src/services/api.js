@@ -2,6 +2,7 @@ import axios from 'axios'
 
 import { mockDocuments } from '@/data/mockData'
 
+
 /* ------------------------------------------------------------------
  * Configuration
  * ------------------------------------------------------------------ */
@@ -55,9 +56,7 @@ export function registerTokenProvider(fn) {
 
 client.interceptors.request.use(
   async (config) => {
-
     if (tokenGetter) {
-
       const token =
         await tokenGetter()
 
@@ -76,7 +75,6 @@ client.interceptors.response.use(
   (res) => res,
 
   (error) => {
-
     const message =
       error.response?.data?.message ||
       error.message ||
@@ -111,7 +109,6 @@ function nowIso() {
 
 
 function buildMockInsights(doc) {
-
   return {
     summary:
       doc.summary ||
@@ -139,7 +136,6 @@ function mockAnswer(
   doc,
   question
 ) {
-
   const kw =
     doc.keywords
       ?.slice(0, 3)
@@ -174,9 +170,7 @@ export const api = {
    * List documents.
    */
   async getDocuments() {
-
     if (USE_MOCK) {
-
       await delay(650)
 
       return clone(store)
@@ -193,9 +187,7 @@ export const api = {
    * Fetch a single document by id.
    */
   async getDocument(id) {
-
     if (USE_MOCK) {
-
       await delay(450)
 
       const doc =
@@ -226,9 +218,7 @@ export const api = {
    * the original file.
    */
   async getPreviewUrl(id) {
-
     if (USE_MOCK) {
-
       await delay(250)
 
       const doc =
@@ -265,7 +255,6 @@ export const api = {
    * Get a presigned upload URL.
    */
   async getUploadUrl(file) {
-
     const { data } =
       await client.post(
         '/documents/upload-url',
@@ -291,7 +280,6 @@ export const api = {
       signal,
     } = {}
   ) {
-
     await axios.put(
       uploadUrl,
       file,
@@ -304,12 +292,10 @@ export const api = {
         signal,
 
         onUploadProgress: (e) => {
-
           if (
             onProgress &&
             e.total
           ) {
-
             onProgress(
               Math.round(
                 (e.loaded / e.total) *
@@ -329,7 +315,6 @@ export const api = {
   async completeUpload(
     documentId
   ) {
-
     const { data } =
       await client.post(
         `/documents/${documentId}/upload-complete`
@@ -361,17 +346,14 @@ export const api = {
      * -------------------------------------------------------------- */
 
     if (USE_MOCK) {
-
       await new Promise(
         (resolve, reject) => {
-
           let percent = 0
 
           const tick =
             setInterval(() => {
 
               if (signal?.aborted) {
-
                 clearInterval(
                   tick
                 )
@@ -404,18 +386,15 @@ export const api = {
               if (
                 percent >= 100
               ) {
-
                 clearInterval(
                   tick
                 )
 
                 resolve()
               }
-
             }, 260)
         }
       )
-
 
       const ext =
         file.name
@@ -423,9 +402,7 @@ export const api = {
           .pop()
           .toLowerCase()
 
-
       const newDoc = {
-
         id:
           `doc-${Date.now()}`,
 
@@ -478,12 +455,10 @@ export const api = {
         ],
       }
 
-
       store = [
         newDoc,
         ...store,
       ]
-
 
       return clone(
         newDoc
@@ -500,12 +475,10 @@ export const api = {
         file
       )
 
-
     console.log(
       'Upload file size:',
       file.size
     )
-
 
     await this.uploadFileToS3(
       file,
@@ -516,12 +489,10 @@ export const api = {
       }
     )
 
-
     console.log(
       'Upload complete document:',
       presigned.documentId
     )
-
 
     return this.completeUpload(
       presigned.documentId
@@ -537,9 +508,7 @@ export const api = {
    * Delete a document.
    */
   async deleteDocument(id) {
-
     if (USE_MOCK) {
-
       await delay(500)
 
       store =
@@ -551,7 +520,6 @@ export const api = {
         success: true,
       }
     }
-
 
     const { data } =
       await client.delete(
@@ -569,9 +537,7 @@ export const api = {
     id,
     name
   ) {
-
     if (USE_MOCK) {
-
       await delay(450)
 
       store =
@@ -594,7 +560,6 @@ export const api = {
       )
     }
 
-
     const { data } =
       await client.patch(
         `/documents/${id}`,
@@ -612,9 +577,7 @@ export const api = {
     id,
     favorite
   ) {
-
     if (USE_MOCK) {
-
       await delay(200)
 
       store =
@@ -635,7 +598,6 @@ export const api = {
       )
     }
 
-
     const { data } =
       await client.patch(
         `/documents/${id}`,
@@ -655,9 +617,7 @@ export const api = {
    * for a single document.
    */
   async getAISummary(id) {
-
     if (USE_MOCK) {
-
       await delay(900)
 
       const doc =
@@ -676,7 +636,6 @@ export const api = {
       )
     }
 
-
     const { data } =
       await client.get(
         `/ai/documents/${id}/insights`
@@ -694,9 +653,7 @@ export const api = {
     id,
     question
   ) {
-
     if (USE_MOCK) {
-
       await delay(1100)
 
       const doc =
@@ -718,7 +675,6 @@ export const api = {
           ),
       }
     }
-
 
     const { data } =
       await client.post(
@@ -743,9 +699,7 @@ export const api = {
      * -------------------------------------------------------------- */
 
     if (USE_MOCK) {
-
       await delay(500)
-
 
       const analyses =
         store
@@ -756,7 +710,6 @@ export const api = {
           )
           .map(
             (doc) => ({
-
               id:
                 doc.id,
 
@@ -783,14 +736,11 @@ export const api = {
             })
           )
 
-
       return {
-
         success:
           true,
 
         stats: {
-
           totalAIAnalyses:
             analyses.length,
 
@@ -810,7 +760,6 @@ export const api = {
           averageConfidence:
             null,
         },
-
 
         analyses,
 
@@ -837,6 +786,77 @@ export const api = {
 
 
   /* ================================================================
+   * NOTIFICATIONS
+   * ================================================================ */
+
+  /**
+   * Get notifications for the
+   * current authenticated user.
+   */
+  async getNotifications() {
+    if (USE_MOCK) {
+      await delay(300)
+
+      return {
+        success: true,
+        notifications: [],
+      }
+    }
+
+    const { data } =
+      await client.get(
+        '/notifications'
+      )
+
+    return data
+  },
+
+
+  /**
+   * Mark one notification as read.
+   */
+  async markNotificationAsRead(
+    notificationId
+  ) {
+    if (USE_MOCK) {
+      await delay(150)
+
+      return {
+        success: true,
+      }
+    }
+
+    const { data } =
+      await client.post(
+        `/notifications/${notificationId}/read`
+      )
+
+    return data
+  },
+
+
+  /**
+   * Mark all notifications as read.
+   */
+  async markAllNotificationsAsRead() {
+    if (USE_MOCK) {
+      await delay(150)
+
+      return {
+        success: true,
+      }
+    }
+
+    const { data } =
+      await client.post(
+        '/notifications/read-all'
+      )
+
+    return data
+  },
+
+
+  /* ================================================================
    * DASHBOARD STATS
    * ================================================================ */
 
@@ -844,16 +864,13 @@ export const api = {
    * Aggregate stats for the dashboard.
    */
   async getStats() {
-
     if (USE_MOCK) {
-
       await delay(500)
 
       return computeStats(
         store
       )
     }
-
 
     const { data } =
       await client.get(
@@ -872,7 +889,6 @@ export const api = {
 export function computeStats(
   docs
 ) {
-
   const totalBytes =
     docs.reduce(
       (sum, d) =>
@@ -880,9 +896,7 @@ export function computeStats(
       0
     )
 
-
   return {
-
     totalDocuments:
       docs.length,
 
