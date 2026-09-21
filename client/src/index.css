@@ -1,12 +1,21 @@
 @import "tailwindcss";
 
-/* Dark mode: add/remove `dark` class on <html> */
+/* =========================================================
+   DARK MODE
+   ========================================================= */
+
 @custom-variant dark (&:where(.dark, .dark *));
 
+
+/* =========================================================
+   TAILWIND THEME
+   ========================================================= */
+
 @theme {
-  /* =========================================================
+
+  /* =======================================================
      BRAND COLORS
-     ========================================================= */
+     ======================================================= */
 
   --color-brand-50: #eef2ff;
   --color-brand-100: #e0e7ff;
@@ -21,9 +30,10 @@
   --color-brand-950: #1e1b4b;
   --color-brand: #4f46e5;
 
-  /* =========================================================
-     INK / DARK SURFACE COLORS
-     ========================================================= */
+
+  /* =======================================================
+     INK / DARK COLORS
+     ======================================================= */
 
   --color-ink-950: #080d1a;
   --color-ink-900: #0b1220;
@@ -33,17 +43,33 @@
   --color-ink-600: #1e2a45;
   --color-ink-500: #273455;
 
-  /* =========================================================
+
+  /* =======================================================
      FONTS
-     ========================================================= */
+     ======================================================= */
 
-  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-display:
+    "Space Grotesk",
+    ui-sans-serif,
+    system-ui,
+    sans-serif;
 
-  /* =========================================================
+  --font-sans:
+    "Inter",
+    ui-sans-serif,
+    system-ui,
+    sans-serif;
+
+  --font-mono:
+    "JetBrains Mono",
+    ui-monospace,
+    SFMono-Regular,
+    monospace;
+
+
+  /* =======================================================
      SHADOWS
-     ========================================================= */
+     ======================================================= */
 
   --shadow-soft:
     0 1px 2px 0 rgb(15 23 42 / 0.04),
@@ -56,12 +82,17 @@
   --shadow-glow-sm:
     0 8px 30px -12px rgb(79 70 229 / 0.55);
 
-  /* =========================================================
+
+  /* =======================================================
      BACKGROUND IMAGES
-     ========================================================= */
+     ======================================================= */
 
   --background-image-brand-gradient:
-    linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+    linear-gradient(
+      135deg,
+      #4f46e5 0%,
+      #3b82f6 100%
+    );
 
   --background-image-brand-radial:
     radial-gradient(
@@ -84,22 +115,36 @@
 
   --background-size-grid: 44px 44px;
 
-  /* =========================================================
+
+  /* =======================================================
      ANIMATIONS
-     ========================================================= */
+     ======================================================= */
 
-  --animate-fade-in-up: fade-in-up 0.5s ease-out both;
-  --animate-fade-in: fade-in 0.4s ease-out both;
-  --animate-scan: scan 3.4s ease-in-out infinite;
-  --animate-float: float 6s ease-in-out infinite;
-  --animate-shimmer: shimmer 2s infinite;
-  --animate-pulse-ring: pulse-ring 2s infinite;
+  --animate-fade-in-up:
+    fade-in-up 0.5s ease-out both;
 
-  /* =========================================================
+  --animate-fade-in:
+    fade-in 0.4s ease-out both;
+
+  --animate-scan:
+    scan 3.4s ease-in-out infinite;
+
+  --animate-float:
+    float 6s ease-in-out infinite;
+
+  --animate-shimmer:
+    shimmer 2s infinite;
+
+  --animate-pulse-ring:
+    pulse-ring 2s infinite;
+
+
+  /* =======================================================
      KEYFRAMES
-     ========================================================= */
+     ======================================================= */
 
   @keyframes fade-in-up {
+
     0% {
       opacity: 0;
       transform: translateY(12px);
@@ -111,7 +156,9 @@
     }
   }
 
+
   @keyframes fade-in {
+
     0% {
       opacity: 0;
     }
@@ -121,7 +168,9 @@
     }
   }
 
+
   @keyframes scan {
+
     0% {
       transform: translateY(-10%);
       opacity: 0;
@@ -141,7 +190,9 @@
     }
   }
 
+
   @keyframes float {
+
     0%,
     100% {
       transform: translateY(0);
@@ -152,26 +203,101 @@
     }
   }
 
+
   @keyframes shimmer {
+
     100% {
       transform: translateX(100%);
     }
   }
 
+
   @keyframes pulse-ring {
+
     0% {
-      box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4);
+      box-shadow:
+        0 0 0 0
+        rgba(79, 70, 229, 0.4);
     }
 
     70% {
-      box-shadow: 0 0 0 12px rgba(79, 70, 229, 0);
+      box-shadow:
+        0 0 0 12px
+        rgba(79, 70, 229, 0);
     }
 
     100% {
-      box-shadow: 0 0 0 0 rgba(79, 70, 229, 0);
+      box-shadow:
+        0 0 0 0
+        rgba(79, 70, 229, 0);
     }
   }
 }
+
+
+/* =========================================================
+   LIGHT THEME VARIABLES
+   ========================================================= */
+
+:root {
+
+  /* Main page */
+  --bg: 248 250 252;
+
+  /* Main surface */
+  --surface: 255 255 255;
+
+  /* Cards / modals */
+  --surface-1: 255 255 255;
+
+  /* Inputs / secondary areas */
+  --surface-2: 241 245 249;
+
+  /* Primary text */
+  --text: 15 23 42;
+
+  /* Secondary text */
+  --text-muted: 100 116 139;
+
+  /* Borders */
+  --border: 226 232 240;
+
+  /* Brand */
+  --brand: 79 70 229;
+}
+
+
+/* =========================================================
+   DARK THEME VARIABLES
+   ========================================================= */
+
+.dark {
+
+  /* Main page */
+  --bg: 8 13 26;
+
+  /* Main surface */
+  --surface: 11 18 32;
+
+  /* Cards / modals */
+  --surface-1: 15 23 41;
+
+  /* Inputs / secondary areas */
+  --surface-2: 22 33 59;
+
+  /* Primary text */
+  --text: 248 250 252;
+
+  /* Secondary text */
+  --text-muted: 148 163 184;
+
+  /* Borders */
+  --border: 39 52 85;
+
+  /* Brand */
+  --brand: 99 102 241;
+}
+
 
 /* =========================================================
    BASE STYLES
@@ -181,23 +307,53 @@ html {
   scroll-behavior: smooth;
 }
 
+
 body {
   margin: 0;
-  font-family: var(--font-sans);
-  background: #ffffff;
-  color: #0f172a;
+
+  font-family:
+    var(--font-sans);
+
+  background:
+    rgb(var(--bg));
+
+  color:
+    rgb(var(--text));
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
-.dark body {
-  background: #080d1a;
-  color: #f8fafc;
-}
 
 * {
   box-sizing: border-box;
 }
 
-/* Smooth theme transitions */
+
+/* =========================================================
+   COMMON THEME UTILITIES
+   ========================================================= */
+
+.text-muted {
+  color: rgb(var(--text-muted));
+}
+
+
+.surface {
+  background: rgb(var(--surface-1));
+}
+
+
+.surface-2 {
+  background: rgb(var(--surface-2));
+}
+
+
+/* =========================================================
+   SMOOTH THEME TRANSITIONS
+   ========================================================= */
+
 html,
 body {
   transition:
