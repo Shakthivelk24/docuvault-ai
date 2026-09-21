@@ -1,100 +1,248 @@
-import { Sparkles, Loader2, AlertCircle, Tag, ScanText } from 'lucide-react'
-import KeywordBadge from '@/components/ui/KeywordBadge'
+import {
+  Sparkles,
+  FileText,
+  CheckCircle2,
+  Lightbulb,
+} from 'lucide-react'
 
-function Skeleton() {
-  return (
-    <div className="space-y-2.5">
-      <div className="h-3.5 w-full skeleton" />
-      <div className="h-3.5 w-11/12 skeleton" />
-      <div className="h-3.5 w-4/5 skeleton" />
-    </div>
-  )
-}
 
-/**
- * AI insights panel: summary, classification, and keywords.
- * @param {{ summary, keywords, classification, loading, status, onAnalyze, onKeywordClick }} props
- */
 export default function AISummary({
   summary,
   keywords = [],
   classification,
-  loading = false,
   status,
-  onAnalyze,
-  onKeywordClick,
+  keyPoints = [],
+  insights = [],
 }) {
-  const confidencePct = classification ? Math.round(classification.confidence * 100) : 0
 
   return (
-    <section className="card p-5 sm:p-6">
-      <div className="mb-4 flex items-center gap-2">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-gradient">
-          <Sparkles className="h-4 w-4 text-white" />
+    <div className="card overflow-hidden">
+
+      {/* ============================================================
+          HEADER
+          ============================================================ */}
+
+      <div className="flex items-center justify-between border-b border-[rgb(var(--border))] p-5">
+
+        <div className="flex items-center gap-3">
+
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/10">
+
+            <Sparkles
+              className="h-5 w-5 text-brand-500"
+              aria-hidden="true"
+            />
+
+          </div>
+
+          <div>
+
+            <h2 className="text-base font-semibold">
+              AI Summary
+            </h2>
+
+            <p className="text-xs text-muted">
+              Generated from your document
+            </p>
+
+          </div>
+
         </div>
-        <h2 className="text-base font-semibold">AI Summary</h2>
+
+
+        {status && (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-600">
+
+            <CheckCircle2
+              className="h-3.5 w-3.5"
+            />
+
+            {status === 'COMPLETED'
+              ? 'AI Complete'
+              : status}
+
+          </span>
+        )}
+
       </div>
 
-      {loading ? (
-        <Skeleton />
-      ) : status === 'processing' ? (
-        <div className="flex items-center gap-3 rounded-xl bg-amber-500/10 p-4 text-sm text-amber-500">
-          <Loader2 className="h-5 w-5 animate-spin" />
-          <p>Analysis in progress. Insights will appear here shortly.</p>
-        </div>
-      ) : status === 'failed' || !summary ? (
-        <div className="flex flex-col items-start gap-3 rounded-xl bg-[rgb(var(--surface-2))] p-4">
-          <p className="flex items-center gap-2 text-sm text-muted">
-            {status === 'failed' ? (
-              <>
-                <AlertCircle className="h-4 w-4 text-red-500" /> AI processing failed for this document.
-              </>
-            ) : (
-              <>
-                <ScanText className="h-4 w-4" /> This document hasn't been analyzed yet.
-              </>
-            )}
+
+      {/* ============================================================
+          CONTENT
+          ============================================================ */}
+
+      <div className="space-y-6 p-5">
+
+
+        {/* ==========================================================
+            SUMMARY
+            ========================================================== */}
+
+        <section>
+
+          <h3 className="mb-2 text-sm font-semibold">
+            Summary
+          </h3>
+
+          <p className="text-sm leading-6 text-muted">
+            {summary ||
+              'No summary available.'}
           </p>
-          {onAnalyze && (
-            <button onClick={onAnalyze} className="btn-primary">
-              <Sparkles className="h-4 w-4" />
-              {status === 'failed' ? 'Retry analysis' : 'Analyze with AI'}
-            </button>
-          )}
-        </div>
-      ) : (
-        <>
-          <p className="text-sm leading-relaxed text-muted">{summary}</p>
 
-          {classification && (
-            <div className="mt-5 rounded-xl bg-[rgb(var(--surface-2))] p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-muted">Classification</span>
-                <span className="font-mono text-xs text-brand-500">{confidencePct}% confidence</span>
-              </div>
-              <p className="mt-1 font-display text-lg font-semibold">{classification.label}</p>
-              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[rgb(var(--border))]">
-                <div className="h-full rounded-full bg-brand-gradient" style={{ width: `${confidencePct}%` }} />
-              </div>
-            </div>
-          )}
+        </section>
 
-          {keywords.length > 0 && (
-            <div className="mt-5">
-              <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted">
-                <Tag className="h-3.5 w-3.5" /> Key topics
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {keywords.map((kw) => (
-                  <KeywordBadge key={kw} onClick={onKeywordClick ? () => onKeywordClick(kw) : undefined}>
-                    {kw}
-                  </KeywordBadge>
-                ))}
-              </div>
+
+        {/* ==========================================================
+            DOCUMENT TYPE
+            ========================================================== */}
+
+        {classification?.label && (
+
+          <section>
+
+            <h3 className="mb-2 text-sm font-semibold">
+              Document Type
+            </h3>
+
+            <div className="flex items-center gap-2">
+
+              <FileText
+                className="h-4 w-4 text-brand-500"
+              />
+
+              <span className="rounded-lg bg-[rgb(var(--surface-2))] px-3 py-1.5 text-sm font-medium">
+                {classification.label}
+              </span>
+
             </div>
-          )}
-        </>
-      )}
-    </section>
+
+          </section>
+
+        )}
+
+
+        {/* ==========================================================
+            KEY POINTS
+            ========================================================== */}
+
+        {keyPoints.length > 0 && (
+
+          <section>
+
+            <h3 className="mb-3 text-sm font-semibold">
+              Key Points
+            </h3>
+
+            <ul className="space-y-2.5">
+
+              {keyPoints.map(
+                (point, index) => (
+
+                  <li
+                    key={`${point}-${index}`}
+                    className="flex gap-3 text-sm leading-6"
+                  >
+
+                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-500" />
+
+                    <span className="text-muted">
+                      {point}
+                    </span>
+
+                  </li>
+
+                )
+              )}
+
+            </ul>
+
+          </section>
+
+        )}
+
+
+        {/* ==========================================================
+            KEYWORDS
+            ========================================================== */}
+
+        {keywords.length > 0 && (
+
+          <section>
+
+            <h3 className="mb-3 text-sm font-semibold">
+              Keywords
+            </h3>
+
+            <div className="flex flex-wrap gap-2">
+
+              {keywords.map(
+                (keyword, index) => (
+
+                  <span
+                    key={`${keyword}-${index}`}
+                    className="rounded-full bg-brand-500/10 px-3 py-1.5 text-xs font-medium text-brand-500"
+                  >
+                    {keyword}
+                  </span>
+
+                )
+              )}
+
+            </div>
+
+          </section>
+
+        )}
+
+
+        {/* ==========================================================
+            INSIGHTS
+            ========================================================== */}
+
+        {insights.length > 0 && (
+
+          <section>
+
+            <div className="mb-3 flex items-center gap-2">
+
+              <Lightbulb
+                className="h-4 w-4 text-amber-500"
+              />
+
+              <h3 className="text-sm font-semibold">
+                AI Insights
+              </h3>
+
+            </div>
+
+
+            <div className="space-y-3">
+
+              {insights.map(
+                (insight, index) => (
+
+                  <div
+                    key={`${insight}-${index}`}
+                    className="rounded-xl bg-[rgb(var(--surface-2))] p-3.5"
+                  >
+
+                    <p className="text-sm leading-6 text-muted">
+                      {insight}
+                    </p>
+
+                  </div>
+
+                )
+              )}
+
+            </div>
+
+          </section>
+
+        )}
+
+      </div>
+
+    </div>
   )
 }

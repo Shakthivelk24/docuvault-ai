@@ -1,13 +1,21 @@
 import { ClerkProvider } from '@clerk/clerk-react'
 import { useNavigate } from 'react-router-dom'
+
 import { useTheme } from '@/context/ThemeContext'
 import { getClerkAppearance } from '@/lib/clerkAppearance'
 
 /**
- * Wraps ClerkProvider so Clerk uses React Router for navigation and picks up
- * the current light/dark appearance.
+ * Connects Clerk with:
+ *
+ * - React Router navigation
+ * - Application light/dark theme
+ * - Custom Clerk appearance
+ * - Sign-out redirect
  */
-export default function ClerkThemeBridge({ publishableKey, children }) {
+export default function ClerkThemeBridge({
+  publishableKey,
+  children,
+}) {
   const navigate = useNavigate()
   const { isDark } = useTheme()
 
@@ -15,8 +23,16 @@ export default function ClerkThemeBridge({ publishableKey, children }) {
     <ClerkProvider
       publishableKey={publishableKey}
       appearance={getClerkAppearance(isDark)}
+
+      // Use React Router instead of full-page navigation.
       routerPush={(to) => navigate(to)}
-      routerReplace={(to) => navigate(to, { replace: true })}
+      routerReplace={(to) =>
+        navigate(to, {
+          replace: true,
+        })
+      }
+
+      // Redirect after signing out.
       afterSignOutUrl="/"
     >
       {children}
