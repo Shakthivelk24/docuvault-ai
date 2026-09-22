@@ -4,8 +4,14 @@ import {
   useState,
 } from 'react'
 
-import { useNavigate } from 'react-router-dom'
-import { UserButton, useAuth } from '@clerk/clerk-react'
+import {
+  useNavigate,
+} from 'react-router-dom'
+
+import {
+  UserButton,
+  useAuth,
+} from '@clerk/clerk-react'
 
 import {
   Menu,
@@ -25,9 +31,9 @@ import { timeAgo } from '@/lib/format'
 import api from '@/services/api'
 
 
-// =========================================================
-// NOTIFICATION ICONS
-// =========================================================
+/* =========================================================
+ * NOTIFICATION ICONS
+ * ========================================================= */
 
 const NOTIFICATION_ICONS = {
   CheckCircle2,
@@ -39,41 +45,64 @@ const NOTIFICATION_ICONS = {
 }
 
 
-// =========================================================
-// NOTIFICATIONS
-// =========================================================
+/* =========================================================
+ * NOTIFICATIONS
+ * ========================================================= */
 
 function Notifications() {
-  const { getToken } = useAuth()
+  const {
+    getToken,
+  } = useAuth()
 
-  const [open, setOpen] =
-    useState(false)
 
-  const [notifications, setNotifications] =
-    useState([])
+  const [
+    open,
+    setOpen,
+  ] = useState(false)
 
-  const [loading, setLoading] =
-    useState(true)
+
+  const [
+    notifications,
+    setNotifications,
+  ] = useState([])
+
+
+  const [
+    loading,
+    setLoading,
+  ] = useState(true)
+
 
   const close = useCallback(
     () => setOpen(false),
     []
   )
 
-  const ref = useDismiss(close)
+
+  const ref =
+    useDismiss(close)
 
 
-  // =======================================================
-  // LOAD NOTIFICATIONS
-  // =======================================================
+  /* =======================================================
+   * LOAD EXISTING NOTIFICATIONS
+   * ======================================================= */
 
   const loadNotifications =
     useCallback(async () => {
       try {
         setLoading(true)
 
+        console.log(
+          '🔔 Loading notifications...'
+        )
+
         const response =
           await api.getNotifications()
+
+        console.log(
+          '🔔 Notifications API response:',
+          response
+        )
 
         if (
           response?.success &&
@@ -87,7 +116,7 @@ function Notifications() {
         }
       } catch (error) {
         console.error(
-          'Failed to load notifications:',
+          '❌ Failed to load notifications:',
           error
         )
       } finally {
@@ -96,40 +125,54 @@ function Notifications() {
     }, [])
 
 
-  // =======================================================
-  // INITIAL NOTIFICATION LOAD
-  // =======================================================
+  /* =======================================================
+   * INITIAL NOTIFICATION LOAD
+   * ======================================================= */
 
   useEffect(() => {
     loadNotifications()
-  }, [loadNotifications])
+  }, [
+    loadNotifications,
+  ])
 
 
-  // =======================================================
-  // REAL-TIME SSE CONNECTION
-  // =======================================================
+  /* =======================================================
+   * REAL-TIME SSE CONNECTION
+   * ======================================================= */
 
   useEffect(() => {
     let controller = null
     let reconnectTimer = null
     let stopped = false
 
+
     const connect = async () => {
       try {
+        if (stopped) {
+          return
+        }
+
+
+        console.log(
+          '📡 Starting notification SSE connection...'
+        )
+
+
         controller =
           new AbortController()
 
 
-        // ---------------------------------------------------
-        // Get Clerk token
-        // ---------------------------------------------------
+        /* ---------------------------------------------------
+         * GET CLERK TOKEN
+         * --------------------------------------------------- */
 
         const token =
           await getToken()
 
+
         if (!token) {
           console.warn(
-            'Clerk token unavailable for notification stream.'
+            '⚠️ Clerk token unavailable for notification stream.'
           )
 
           if (!stopped) {
@@ -144,25 +187,37 @@ function Notifications() {
         }
 
 
-        // ---------------------------------------------------
-        // API URL
-        // ---------------------------------------------------
+        console.log(
+          '✅ Clerk token received for SSE.'
+        )
+
+
+        /* ---------------------------------------------------
+         * API URL
+         * --------------------------------------------------- */
 
         const API_URL =
           import.meta.env.VITE_API_URL
 
+
         if (!API_URL) {
           console.error(
-            'VITE_API_URL is not configured.'
+            '❌ VITE_API_URL is not configured.'
           )
 
           return
         }
 
 
-        // ---------------------------------------------------
-        // Connect to SSE endpoint
-        // ---------------------------------------------------
+        console.log(
+          '📡 Notification SSE URL:',
+          `${API_URL}/notifications/stream`
+        )
+
+
+        /* ---------------------------------------------------
+         * CONNECT TO SSE
+         * --------------------------------------------------- */
 
         const response =
           await fetch(
@@ -199,19 +254,21 @@ function Notifications() {
 
 
         console.log(
-          'Notification SSE connected.'
+          '✅ Notification SSE connected.'
         )
 
 
-        // ---------------------------------------------------
-        // Read SSE stream
-        // ---------------------------------------------------
+        /* ---------------------------------------------------
+         * READ STREAM
+         * --------------------------------------------------- */
 
         const reader =
           response.body.getReader()
 
+
         const decoder =
           new TextDecoder()
+
 
         let buffer = ''
 
@@ -224,6 +281,10 @@ function Notifications() {
 
 
           if (done) {
+            console.log(
+              '📡 Notification SSE stream ended.'
+            )
+
             break
           }
 
@@ -247,6 +308,12 @@ function Notifications() {
               '\n\n'
             )
 
+
+          /*
+           * Keep incomplete event
+           * for the next chunk.
+           */
+
           buffer =
             events.pop() || ''
 
@@ -269,6 +336,7 @@ function Notifications() {
             let eventName =
               'message'
 
+
             let data = ''
 
 
@@ -276,6 +344,11 @@ function Notifications() {
               const line
               of lines
             ) {
+
+              /* ---------------------------------------------
+               * EVENT NAME
+               * --------------------------------------------- */
+
               if (
                 line.startsWith(
                   'event:'
@@ -287,6 +360,10 @@ function Notifications() {
                     .trim()
               }
 
+
+              /* ---------------------------------------------
+               * EVENT DATA
+               * --------------------------------------------- */
 
               if (
                 line.startsWith(
@@ -301,9 +378,53 @@ function Notifications() {
             }
 
 
-            // ------------------------------------------------
-            // NEW NOTIFICATION
-            // ------------------------------------------------
+            /* -----------------------------------------------
+             * DEBUG EVERY SSE EVENT
+             * ----------------------------------------------- */
+
+            console.log(
+              '📡 SSE EVENT:',
+              eventName,
+              data
+            )
+
+
+            /* -----------------------------------------------
+             * CONNECTED
+             * ----------------------------------------------- */
+
+            if (
+              eventName ===
+              'connected'
+            ) {
+              console.log(
+                '🟢 Notification SSE connection confirmed.'
+              )
+
+              continue
+            }
+
+
+            /* -----------------------------------------------
+             * HEARTBEAT
+             * ----------------------------------------------- */
+
+            if (
+              eventName ===
+              'heartbeat'
+            ) {
+              console.log(
+                '💓 Notification SSE heartbeat:',
+                data
+              )
+
+              continue
+            }
+
+
+            /* -----------------------------------------------
+             * NEW NOTIFICATION
+             * ----------------------------------------------- */
 
             if (
               eventName ===
@@ -312,14 +433,22 @@ function Notifications() {
             ) {
               try {
                 const notification =
-                  JSON.parse(data)
+                  JSON.parse(
+                    data
+                  )
+
+
+                console.log(
+                  '🔔 SSE NOTIFICATION RECEIVED:',
+                  notification
+                )
 
 
                 setNotifications(
                   (current) => {
 
                     /*
-                     * Avoid duplicates.
+                     * Prevent duplicates.
                      */
 
                     const exists =
@@ -331,30 +460,40 @@ function Notifications() {
 
 
                     if (exists) {
+                      console.log(
+                        'ℹ️ Notification already exists:',
+                        notification.id
+                      )
+
                       return current
                     }
 
 
-                    return [
+                    /*
+                     * Add new notification
+                     * to the beginning.
+                     */
+
+                    const updated = [
                       notification,
                       ...current,
                     ].slice(0, 30)
+
+
+                    console.log(
+                      '✅ Notification added to UI:',
+                      updated
+                    )
+
+
+                    return updated
                   }
-                )
-
-
-                /*
-                 * Optional browser console message
-                 */
-
-                console.log(
-                  'New notification:',
-                  notification
                 )
               } catch (error) {
                 console.error(
-                  'Failed to parse notification:',
-                  error
+                  '❌ Failed to parse notification:',
+                  error,
+                  data
                 )
               }
             }
@@ -362,14 +501,15 @@ function Notifications() {
         }
 
 
-        // ---------------------------------------------------
-        // Reconnect after connection closes
-        // ---------------------------------------------------
+        /* ---------------------------------------------------
+         * RECONNECT
+         * --------------------------------------------------- */
 
         if (!stopped) {
           console.log(
-            'Notification SSE disconnected. Reconnecting...'
+            '🔄 Notification SSE disconnected. Reconnecting in 3 seconds...'
           )
+
 
           reconnectTimer =
             setTimeout(
@@ -388,12 +528,16 @@ function Notifications() {
           error?.name ===
           'AbortError'
         ) {
+          console.log(
+            '🛑 Notification SSE connection aborted.'
+          )
+
           return
         }
 
 
         console.error(
-          'Notification SSE error:',
+          '❌ Notification SSE error:',
           error
         )
 
@@ -412,9 +556,9 @@ function Notifications() {
     connect()
 
 
-    // -------------------------------------------------------
-    // Cleanup
-    // -------------------------------------------------------
+    /* -------------------------------------------------------
+     * CLEANUP
+     * ------------------------------------------------------- */
 
     return () => {
       stopped = true
@@ -430,13 +574,21 @@ function Notifications() {
       if (controller) {
         controller.abort()
       }
+
+
+      console.log(
+        '🧹 Notification SSE cleanup.'
+      )
     }
-  }, [getToken])
+
+  }, [
+    getToken,
+  ])
 
 
-  // =======================================================
-  // UNREAD COUNT
-  // =======================================================
+  /* =======================================================
+   * UNREAD COUNT
+   * ======================================================= */
 
   const unreadCount =
     notifications.filter(
@@ -445,13 +597,16 @@ function Notifications() {
     ).length
 
 
-  // =======================================================
-  // MARK ONE NOTIFICATION AS READ
-  // =======================================================
+  /* =======================================================
+   * MARK ONE NOTIFICATION AS READ
+   * ======================================================= */
 
   const handleNotificationClick =
     async (notification) => {
-      if (notification.read) {
+
+      if (
+        notification.read
+      ) {
         return
       }
 
@@ -477,20 +632,23 @@ function Notifications() {
         )
       } catch (error) {
         console.error(
-          'Failed to mark notification as read:',
+          '❌ Failed to mark notification as read:',
           error
         )
       }
     }
 
 
-  // =======================================================
-  // MARK ALL AS READ
-  // =======================================================
+  /* =======================================================
+   * MARK ALL AS READ
+   * ======================================================= */
 
   const handleMarkAllAsRead =
     async () => {
-      if (unreadCount === 0) {
+
+      if (
+        unreadCount === 0
+      ) {
         return
       }
 
@@ -510,16 +668,16 @@ function Notifications() {
         )
       } catch (error) {
         console.error(
-          'Failed to mark all notifications as read:',
+          '❌ Failed to mark all notifications as read:',
           error
         )
       }
     }
 
 
-  // =======================================================
-  // RENDER
-  // =======================================================
+  /* =======================================================
+   * RENDER
+   * ======================================================= */
 
   return (
     <div
@@ -535,7 +693,8 @@ function Notifications() {
         type="button"
         onClick={() =>
           setOpen(
-            (value) => !value
+            (value) =>
+              !value
           )
         }
         className={[
@@ -544,6 +703,7 @@ function Notifications() {
           'transition-all duration-200',
           'hover:bg-[rgb(var(--surface-2))]',
           'hover:text-[rgb(var(--text))]',
+
           open
             ? 'bg-[rgb(var(--surface-2))] text-[rgb(var(--text))]'
             : '',
@@ -553,7 +713,10 @@ function Notifications() {
       >
 
         <Bell
-          className="h-[18px] w-[18px]"
+          className="
+            h-[18px]
+            w-[18px]
+          "
         />
 
 
@@ -585,11 +748,16 @@ function Notifications() {
       {open && (
         <div
           className="
-            absolute right-0 z-50 mt-2
-            w-[calc(100vw-2rem)] max-w-sm
+            absolute
+            right-0
+            z-50
+            mt-2
+            w-[calc(100vw-2rem)]
+            max-w-sm
             overflow-hidden
             rounded-2xl
-            border border-[rgb(var(--border))]
+            border
+            border-[rgb(var(--border))]
             bg-[rgb(var(--surface-1))]
             shadow-xl
             animate-fade-in
@@ -602,7 +770,9 @@ function Notifications() {
 
           <div
             className="
-              flex items-center justify-between
+              flex
+              items-center
+              justify-between
               border-b
               border-[rgb(var(--border))]
               px-4
@@ -747,7 +917,10 @@ function Notifications() {
                 >
 
                   <Bell
-                    className="h-5 w-5"
+                    className="
+                      h-5
+                      w-5
+                    "
                   />
 
                 </div>
@@ -1030,9 +1203,9 @@ function Notifications() {
 }
 
 
-// =========================================================
-// NAVBAR
-// =========================================================
+/* =========================================================
+ * NAVBAR
+ * ========================================================= */
 
 export default function Navbar({
   onMenuClick,
@@ -1040,19 +1213,24 @@ export default function Navbar({
   const navigate =
     useNavigate()
 
-  const [query, setQuery] =
-    useState('')
+
+  const [
+    query,
+    setQuery,
+  ] = useState('')
 
 
-  // =======================================================
-  // SEARCH
-  // =======================================================
+  /* =======================================================
+   * SEARCH
+   * ======================================================= */
 
   function onSearch(event) {
     event.preventDefault()
 
+
     const value =
       query.trim()
+
 
     navigate(
       `/documents${
@@ -1066,9 +1244,9 @@ export default function Navbar({
   }
 
 
-  // =======================================================
-  // RENDER
-  // =======================================================
+  /* =======================================================
+   * RENDER
+   * ======================================================= */
 
   return (
     <header
@@ -1125,7 +1303,10 @@ export default function Navbar({
         >
 
           <Menu
-            className="h-5 w-5"
+            className="
+              h-5
+              w-5
+            "
           />
 
         </button>
@@ -1215,7 +1396,9 @@ export default function Navbar({
         <button
           type="button"
           onClick={() =>
-            navigate('/documents')
+            navigate(
+              '/documents'
+            )
           }
           className="
             flex
