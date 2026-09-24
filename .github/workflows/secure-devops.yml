@@ -15,6 +15,7 @@ permissions:
   contents: read
 
 jobs:
+
   # ============================================================
   # FRONTEND CI
   # ============================================================
@@ -28,6 +29,7 @@ jobs:
         working-directory: client
 
     steps:
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -48,6 +50,7 @@ jobs:
       - name: Build frontend
         run: npm run build
 
+
   # ============================================================
   # BACKEND CI
   # ============================================================
@@ -61,6 +64,7 @@ jobs:
         working-directory: server
 
     steps:
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -78,6 +82,7 @@ jobs:
         run: npm audit --audit-level=high
         continue-on-error: true
 
+
   # ============================================================
   # SECRET SCANNING
   # ============================================================
@@ -87,6 +92,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -97,6 +103,7 @@ jobs:
         with:
           extra_args: --only-verified
 
+
   # ============================================================
   # SAST
   # ============================================================
@@ -106,6 +113,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -115,3 +123,63 @@ jobs:
           config: >-
             p/javascript
             p/security-audit
+
+
+  # ============================================================
+  # FRONTEND DOCKER BUILD + TRIVY
+  # ============================================================
+
+  docker-client:
+    name: Build & Scan Frontend Docker Image
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build frontend Docker image
+        run: |
+          docker build \
+            -f docker/frontend/Dockerfile \
+            -t docuvault-client:${{ github.sha }} \
+            .
+
+      - name: Scan frontend image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: docuvault-client:${{ github.sha }}
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: CRITICAL,HIGH
+
+
+  # ============================================================
+  # BACKEND DOCKER BUILD + TRIVY
+  # ============================================================
+
+  docker-server:
+    name: Build & Scan Backend Docker Image
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build backend Docker image
+        run: |
+          docker build \
+            -f docker/backend/Dockerfile \
+            -t docuvault-server:${{ github.sha }} \
+            .
+
+      - name: Scan backend image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: docuvault-server:${{ github.sha }}
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: CRITICAL,HIGH
