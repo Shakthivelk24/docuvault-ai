@@ -45,6 +45,9 @@ RUN npm run build
 # Nginx Alpine is extremely small (~23MB) and production-hardened
 FROM nginx:alpine AS production
 
+RUN apk update && \
+    apk upgrade
+
 # Copy custom Nginx configuration
 # Controls how Nginx serves the React SPA (Single Page App)
 COPY docker/frontend/nginx.conf /etc/nginx/conf.d/default.conf
