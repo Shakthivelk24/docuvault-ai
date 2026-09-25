@@ -643,7 +643,7 @@ export default function AIInsights() {
 
                 {/* ----------------------------------------------
                    AI CHAT
-                   ---------------------------------------------- */}
+                   ----------------------------------------------- */}
 
                 <AIChat
                   documentId={
@@ -670,7 +670,7 @@ export default function AIInsights() {
               </div>
 
             )}
-
+ 
           </div>
 
         </div>
