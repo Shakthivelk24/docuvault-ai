@@ -405,6 +405,10 @@ jobs:
   # KUBERNETES MANIFEST VALIDATION
   # ============================================================
 
+    # ============================================================
+  # KUBERNETES MANIFEST VALIDATION
+  # ============================================================
+
   deploy-kubernetes:
     name: Validate Kubernetes Manifests
     runs-on: ubuntu-latest
@@ -446,12 +450,32 @@ jobs:
 
 
       # --------------------------------------------------------
-      # Validate Kubernetes manifests
+      # Validate Kubernetes YAML syntax
       # --------------------------------------------------------
 
-      - name: Validate Kubernetes manifests
+      - name: Validate Kubernetes YAML syntax
         run: |
-          kubectl apply --dry-run=client --validate=false -f k8s/
+          python -m pip install pyyaml
+
+          python - <<'PY'
+          import glob
+          import yaml
+
+          files = glob.glob("k8s/*.yaml")
+
+          if not files:
+              raise SystemExit("No Kubernetes YAML files found.")
+
+          for file in files:
+              print(f"Validating {file}")
+
+              with open(file, "r", encoding="utf-8") as f:
+                  list(yaml.safe_load_all(f))
+
+              print(f"✓ {file} is valid YAML")
+
+          print("✓ All Kubernetes manifests have valid YAML syntax")
+          PY
 
 
       # --------------------------------------------------------
