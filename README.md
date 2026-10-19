@@ -491,7 +491,7 @@ Planned improvements include:
 | GitHub OIDC | ✅ |
 | AWS IAM | ✅ |
 | Amazon ECR | ✅ |
-| Kubernetes Manifests | 🚧 |
+| Kubernetes Manifests | ✅ |
 | Kubernetes Deployment | 🚧 |
 | AWS EKS | 🚧 |
 | Prometheus | 🚧 |
