@@ -19,9 +19,7 @@ spec:
     spec:
       containers:
         - name: server
-
           image: 874708626724.dkr.ecr.ap-south-1.amazonaws.com/docuvault-server:IMAGE_TAG
-
           imagePullPolicy: IfNotPresent
 
           ports:
@@ -32,7 +30,6 @@ spec:
             requests:
               cpu: "100m"
               memory: "128Mi"
-
             limits:
               cpu: "500m"
               memory: "512Mi"
@@ -40,6 +37,36 @@ spec:
           env:
             - name: NODE_ENV
               value: "production"
+
+            - name: PORT
+              value: "5000"
+
+            - name: AWS_REGION
+              value: "ap-south-1"
+
+            - name: DYNAMODB_REGION
+              value: "eu-north-1"
+
+            - name: S3_BUCKET_NAME
+              value: "docuvault-ai-documents-mumbai"
+
+            - name: CLERK_PUBLISHABLE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: docuvault-secrets
+                  key: CLERK_PUBLISHABLE_KEY
+
+            - name: CLERK_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: docuvault-secrets
+                  key: CLERK_SECRET_KEY
+
+            - name: GEMINI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: docuvault-secrets
+                  key: GEMINI_API_KEY
 
           readinessProbe:
             tcpSocket:
